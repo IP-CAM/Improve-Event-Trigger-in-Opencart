@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>improve_event_trigger</name>
+    <code>improve_event_trigger</code>
+    <description>Improve event trigger</description>
+    <version>1.0.0</version>
+    <author><![CDATA[Ivan Stasiuk<br/><a href="https://stasi.uk">Get Help</a>]]> </author>
+    <link>https://stasi.uk</link>
+
+    <file path="system/engine/event.php">
+
+        <operation error="skip">
+            <search><![CDATA[protected $registry;]]></search>
+            <add position="before"><![CDATA[
+                /* IMPROVE_EVENT_TRIGGER START */
+                private $preparedTriggers = array();
+                private $matches = array();
+                public function getMatches()
+                {
+                    return $this->matches;
+                }
+                public function setMatches($matches)
+                {
+                    $this->matches = $matches;
+                }
+                public function getPreparedTriggers()
+                {
+                    return $this->preparedTriggers;
+                }
+                public function setPreparedTriggers($preparedTriggers)
+                {
+                    $this->preparedTriggers = $preparedTriggers;
+                }
+                /* IMPROVE_EVENT_TRIGGER END */
+            ]]></add>
+        </operation>
+
+        <!-- OC 3.0 START -->
+        <operation error="skip">
+            <search><![CDATA[if (preg_match('/^' . str_replace(array('\*', '\?'), array('.*', '.'), preg_quote($value['trigger'], '/')) . '/', $event)) {]]></search>
+            <add position="replace"><![CDATA[
+                /* IMPROVE_EVENT_TRIGGER START */
+                if ($matchResult) {
+                /* IMPROVE_EVENT_TRIGGER END */
+            ]]></add>
+        </operation>
+
+        <operation error="skip">
+            <search><![CDATA[foreach ($this->data as $value) {]]></search>
+            <add position="after"><![CDATA[
+                /* IMPROVE_EVENT_TRIGGER START */
+                if (isset($this->preparedTriggers[$value['trigger']])) {
+                    $preparedTrigger = $this->preparedTriggers[$value['trigger']];
+                } else {
+                    $preparedTrigger = str_replace(array('\*', '\?'), array('.*', '.'), preg_quote($value['trigger'], '/'));
+                    $this->preparedTriggers[$value['trigger']] = $preparedTrigger;
+                }
+                $matchKey = (string) $preparedTrigger . (string) $event;
+                if (isset($this->matches[$matchKey])) {
+                    $matchResult = $this->matches[$matchKey];
+                } else {
+                    $matchResult = preg_match('/^' . $preparedTrigger . '/', $event);
+                    $this->matches[$matchKey] = (bool) $matchResult;
+                }
+                /* IMPROVE_EVENT_TRIGGER END */
+            ]]></add>
+        </operation>
+        <!-- OC 3.0 END -->
+
+        <!-- OC 2.3 START -->
+        <operation error="skip">
+            <search><![CDATA[if (preg_match('/^' . str_replace(array('\*', '\?'), array('.*', '.'), preg_quote($trigger, '/')) . '/', $event)) {]]></search>
+            <add position="replace"><![CDATA[
+                /* IMPROVE_EVENT_TRIGGER START */
+                if ($matchResult) {
+                /* IMPROVE_EVENT_TRIGGER END */
+            ]]></add>
+        </operation>
+
+        <operation error="skip">
+            <search><![CDATA[foreach ($this->data as $trigger => $actions) {]]></search>
+            <add position="after"><![CDATA[
+                /* IMPROVE_EVENT_TRIGGER START */
+                if (isset($this->preparedTriggers[$trigger])) {
+                    $preparedTrigger = $this->preparedTriggers[$trigger];
+                } else {
+                    $preparedTrigger = str_replace(array('\*', '\?'), array('.*', '.'), preg_quote($trigger, '/'));
+                    $this->preparedTriggers[$trigger] = $preparedTrigger;
+                }
+                $matchKey = (string) $preparedTrigger . (string) $event;
+                if (isset($this->matches[$matchKey])) {
+                    $matchResult = $this->matches[$matchKey];
+                } else {
+                    $matchResult = preg_match('/^' . $preparedTrigger . '/', $event);
+                    $this->matches[$matchKey] = (bool) $matchResult;
+                }
+                /* IMPROVE_EVENT_TRIGGER END */
+            ]]></add>
+        </operation>
+        <!-- OC 2.3 END -->
+
+    </file>
+
+</modification>
